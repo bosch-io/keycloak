@@ -16,9 +16,13 @@
  */
 package org.keycloak.testsuite.i18n;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.hamcrest.Matchers;
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.engines.ApacheHttpClient4Engine;
@@ -43,6 +47,8 @@ import org.keycloak.testsuite.pages.LoginPasswordUpdatePage;
 import org.keycloak.testsuite.pages.OAuthGrantPage;
 import org.keycloak.testsuite.util.IdentityProviderBuilder;
 import org.openqa.selenium.Cookie;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author <a href="mailto:gerbermichi@me.com">Michael Gerber</a>
@@ -242,6 +248,31 @@ public class LoginPageTest extends AbstractI18NTest {
         Assert.assertNull(localeCookie);
     }
 
+    // KEYCLOAK-18590
+    @Test
+    public void realmLocalizationMessagesAreNotCachedWithinTheTheme() {
+        final String locale = Locale.ENGLISH.toLanguageTag();
+
+        final String realmLocalizationMessageKey = "loginAccountTitle";
+        final String realmLocalizationMessageValue = "Localization Test";
+
+        CloseableHttpClient httpClient = (CloseableHttpClient) new HttpClientBuilder().build();
+        ApacheHttpClient4Engine engine = new ApacheHttpClient4Engine(httpClient);
+        ResteasyClient client = new ResteasyClientBuilder().httpEngine(engine).build();
+
+        testRealm().localization().saveRealmLocalizationText(locale, realmLocalizationMessageKey,
+                realmLocalizationMessageValue);
+
+        loginPage.open();
+        Response response = client.target(driver.getCurrentUrl()).request().acceptLanguage(locale).get();
+        assertThat(response.readEntity(String.class), Matchers.containsString(realmLocalizationMessageValue));
+
+        testRealm().localization().deleteRealmLocalizationText(locale, realmLocalizationMessageKey);
+
+        loginPage.open();
+        response = client.target(driver.getCurrentUrl()).request().acceptLanguage(locale).get();
+        assertThat(response.readEntity(String.class), Matchers.not(Matchers.containsString(realmLocalizationMessageValue)));
+    }
 
     private void switchLanguageToGermanAndBack(String expectedEnglishMessage, String expectedGermanMessage, LanguageComboboxAwarePage page) {
         // Switch language to Deutsch
