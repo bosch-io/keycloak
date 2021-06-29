@@ -43,6 +43,8 @@ public final class AttributeMetadata {
 
     private final String attributeName;
     private String attributeDisplayName;
+    private String attributeGroup;
+    private AttributeGroupMetadata attributeGroupMetadata;
     private final Predicate<AttributeContext> selector;
     private final Predicate<AttributeContext> writeAllowed;
     /** Predicate to decide if attribute is required, it is handled as required if predicate is null */
@@ -112,6 +114,14 @@ public final class AttributeMetadata {
         return this;
     }
 
+    public String getAttributeGroup() {
+        return attributeGroup;
+    }
+
+    public AttributeGroupMetadata getAttributeGroupMetadata() {
+        return attributeGroupMetadata;
+    }
+    
     public boolean isSelected(AttributeContext context) {
         return selector.test(context);
     }
@@ -184,6 +194,10 @@ public final class AttributeMetadata {
             cloned.addAnnotations(annotations);
         }
         cloned.setAttributeDisplayName(attributeDisplayName);
+        cloned.setAttributeGroup(attributeGroup);
+        if (attributeGroupMetadata != null) {
+            cloned.setAttributeGroupMetadata(attributeGroupMetadata.clone());
+        }
         return cloned;
     }
     
@@ -196,6 +210,18 @@ public final class AttributeMetadata {
     public AttributeMetadata setAttributeDisplayName(String attributeDisplayName) {
         if(attributeDisplayName != null)
             this.attributeDisplayName = attributeDisplayName;
+        return this;
+    }
+
+    public AttributeMetadata setAttributeGroup(String attributeGroup) {
+        if(attributeGroup != null)
+            this.attributeGroup = attributeGroup;
+        return this;
+    }
+
+    public AttributeMetadata setAttributeGroupMetadata(AttributeGroupMetadata attributeGroupMetadata) {
+        if(attributeGroupMetadata != null)
+            this.attributeGroupMetadata = attributeGroupMetadata;
         return this;
     }
 

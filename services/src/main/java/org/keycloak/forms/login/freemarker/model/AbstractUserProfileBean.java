@@ -105,6 +105,10 @@ public abstract class AbstractUserProfileBean {
             return metadata.getName();
         }
 
+        public String getGroup() {
+            return metadata.getAttributeGroup();
+        }
+
         public String getDisplayName() {
             return metadata.getAttributeDisplayName();
         }
@@ -156,6 +160,29 @@ public abstract class AbstractUserProfileBean {
                 return Collections.emptyMap();
             }
             return metadata.getValidators().stream().collect(Collectors.toMap(AttributeValidatorMetadata::getValidatorId, AttributeValidatorMetadata::getValidatorConfig));
+        }
+
+        public String getGroupDisplayHeader() {
+            if (metadata.getAttributeGroupMetadata() != null) {
+                return metadata.getAttributeGroupMetadata().getDisplayHeader();
+            }
+            return null;
+        }
+
+        public String getGroupDisplayDescription() {
+            if (metadata.getAttributeGroupMetadata() != null) {
+                return metadata.getAttributeGroupMetadata().getDisplayDescription();
+            }
+            return null;
+        }
+
+        public Map<String, Object> getGroupAnnotations() {
+
+            if ((metadata.getAttributeGroupMetadata() == null) || (metadata.getAttributeGroupMetadata().getAnnotations() == null)) {
+                return Collections.emptyMap();
+            }
+            
+            return metadata.getAttributeGroupMetadata().getAnnotations();
         }
 
         @Override

@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.keycloak.common.util.MultivaluedHashMap;
 import org.keycloak.component.AmphibianProviderFactory;
@@ -53,6 +54,7 @@ import org.keycloak.userprofile.config.UPAttributeRequired;
 import org.keycloak.userprofile.config.UPAttributeSelector;
 import org.keycloak.userprofile.config.UPConfig;
 import org.keycloak.userprofile.config.UPConfigUtils;
+import org.keycloak.userprofile.config.UPGroup;
 import org.keycloak.userprofile.validator.AttributeRequiredByMetadataValidator;
 import org.keycloak.userprofile.validator.BlankAttributeValidator;
 import org.keycloak.userprofile.validator.ImmutableAttributeValidator;
@@ -255,8 +257,17 @@ public class DeclarativeUserProfileProvider extends AbstractUserProfileProvider<
             return decoratedMetadata;
         }
 
+        decorateWithAttributes(decoratedMetadata, context, parsedConfig.getAttributes(), asHashMap(parsedConfig.getGroups()));
+        return decoratedMetadata;
+    }
+
+    private Map<String, UPGroup> asHashMap(List<UPGroup> groups) {
+        return groups.stream().collect(Collectors.toMap(g -> g.getName(), g -> g));
+    }
+
+    private void decorateWithAttributes(UserProfileMetadata decoratedMetadata, UserProfileContext context, List<UPAttribute> attributes, Map<String, UPGroup> groupsByName) {
         int guiOrder = 0;
-        for (UPAttribute attrConfig : parsedConfig.getAttributes()) {
+        for (UPAttribute attrConfig : attributes) {
             String attributeName = attrConfig.getName();
             List<AttributeValidatorMetadata> validators = new ArrayList<>();
             Map<String, Map<String, Object>> validationsConfig = attrConfig.getValidations();
@@ -313,6 +324,8 @@ public class DeclarativeUserProfileProvider extends AbstractUserProfileProvider<
             }
 
             Map<String, Object> annotations = attrConfig.getAnnotations();
+            String attributeGroup = attrConfig.getGroup();
+            AttributeGroupMetadata groupMetadata = toAttributeGroupMeta(groupsByName.get(attributeGroup));
 
             if (isUsernameOrEmailAttribute(attributeName)) {
                 if (permissions == null) {
@@ -324,21 +337,38 @@ public class DeclarativeUserProfileProvider extends AbstractUserProfileProvider<
                 if (atts.isEmpty()) {
                     // attribute metadata doesn't exist so we have to add it. We keep it optional as Abstract base
                     // doesn't require it.
-                    decoratedMetadata.addAttribute(attributeName, guiOrder++, writeAllowed, validators).addAnnotations(annotations).setAttributeDisplayName(attrConfig.getDisplayName());
+                    decoratedMetadata.addAttribute(attributeName, guiOrder++, writeAllowed, validators)
+                            .addAnnotations(annotations)
+                            .setAttributeDisplayName(attrConfig.getDisplayName())
+                            .setAttributeGroup(attributeGroup)
+                            .setAttributeGroupMetadata(groupMetadata);
                 } else {
                     final int localGuiOrder = guiOrder++;
                     // only add configured validators and annotations if attribute metadata exist
-                    atts.stream().forEach(c -> c.addValidator(validators).addAnnotations(annotations).setAttributeDisplayName(attrConfig.getDisplayName()).setGuiOrder(localGuiOrder));
+                    atts.stream().forEach(c -> c.addValidator(validators)
+                            .addAnnotations(annotations)
+                            .setAttributeDisplayName(attrConfig.getDisplayName())
+                            .setGuiOrder(localGuiOrder)
+                            .setAttributeGroup(attributeGroup)
+                            .setAttributeGroupMetadata(groupMetadata));
                 }
             } else {
-                // always add validation for imuttable/read-only attributes
+                // always add validation for immutable/read-only attributes
                 validators.add(new AttributeValidatorMetadata(ImmutableAttributeValidator.ID));
-                decoratedMetadata.addAttribute(attributeName, guiOrder++, validators, selector, writeAllowed, required, readAllowed).addAnnotations(annotations).setAttributeDisplayName(attrConfig.getDisplayName());
+                decoratedMetadata.addAttribute(attributeName, guiOrder++, validators, selector, writeAllowed, required, readAllowed)
+                        .addAnnotations(annotations)
+                        .setAttributeDisplayName(attrConfig.getDisplayName())
+                        .setAttributeGroup(attributeGroup)
+                        .setAttributeGroupMetadata(groupMetadata);
             }
         }
+    }
 
-        return decoratedMetadata;
-
+    private AttributeGroupMetadata toAttributeGroupMeta(UPGroup group) {
+        if (group == null) {
+            return null;
+        }
+        return new AttributeGroupMetadata(group.getName(), group.getDisplayHeader(), group.getDisplayDescription(), group.getAnnotations());
     }
 
     private boolean isUsernameOrEmailAttribute(String attributeName) {
