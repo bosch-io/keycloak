@@ -3048,6 +3048,131 @@ module.controller('RoleSelectorModalCtrl', function($scope, realm, config, confi
     })
 });
 
+module.controller('GroupSelectorModalCtrl', function($scope, $q, realm, config, configName, GroupsCount, Groups, Group, GroupChildren, Notifications, Dialog, ComponentUtils, $modalInstance, $translate) {
+    $scope.realm = realm;
+    $scope.groupList = [
+        {
+            "id" : "realm",
+            "name": $translate.instant('groups'),
+            "subGroups" : []
+        }
+    ];
+
+    $scope.searchCriteria = '';
+    $scope.currentPage = 1;
+    $scope.currentPageInput = $scope.currentPage;
+    $scope.pageSize = 20;
+    $scope.numberOfPages = 1;
+    $scope.tree = [];
+
+    var refreshGroups = function (search) {
+        console.log('refreshGroups');
+        $scope.currentPageInput = $scope.currentPage;
+
+        var first = ($scope.currentPage * $scope.pageSize) - $scope.pageSize;
+        console.log('first:' + first);
+        var queryParams = {
+            realm : realm.realm,
+            first : first,
+            max : $scope.pageSize
+        };
+        var countParams = {
+            realm : realm.realm,
+            top : 'true'
+        };
+
+        if(angular.isDefined(search) && search !== '') {
+            queryParams.search = search;
+            countParams.search = search;
+        }
+
+        var promiseGetGroups = $q.defer();
+        Groups.query(queryParams, function(entry) {
+            promiseGetGroups.resolve(entry);
+        }, function() {
+            promiseGetGroups.reject($translate.instant('group.fetch.fail', {params: queryParams}));
+        });
+        promiseGetGroups.promise.then(function(groups) {
+            $scope.groupList = [
+                {
+                    "id" : "realm",
+                    "name": $translate.instant('groups'),
+                    "subGroups": ComponentUtils.sortGroups('name', groups)
+                }
+            ];
+            if (angular.isDefined(search) && search !== '') {
+                // Add highlight for concrete text match
+                setTimeout(function () {
+                    document.querySelectorAll('span').forEach(function (element) {
+                        if (element.textContent.indexOf(search) != -1) {
+                            angular.element(element).addClass('highlight');
+                        }
+                    });
+                }, 500);
+            }
+        }, function (failed) {
+            Notifications.error(failed);
+        });
+
+        var promiseCount = $q.defer();
+        console.log('countParams: realm[' + countParams.realm);
+        GroupsCount.query(countParams, function(entry) {
+            promiseCount.resolve(entry);
+        }, function() {
+            promiseCount.reject($translate.instant('group.fetch.fail', {params: countParams}));
+        });
+        promiseCount.promise.then(function(entry) {
+            if(angular.isDefined(entry.count) && entry.count > $scope.pageSize) {
+                $scope.numberOfPages = Math.ceil(entry.count/$scope.pageSize);
+            } else {
+                $scope.numberOfPages = 1;
+            }
+        }, function (failed) {
+            Notifications.error(failed);
+        });
+    };
+
+    refreshGroups();
+
+    $scope.selectGroup = function(selected) {
+        if(selected.id === "realm") return;
+
+        config[configName] = selected.id;
+        $modalInstance.close();
+    }
+
+    $scope.cancel = function() {
+        $modalInstance.dismiss();
+    }
+
+    var isLeaf = function(node) {
+        return node.id !== "realm" && (!node.subGroups || node.subGroups.length === 0);
+    };
+
+    $scope.getGroupClass = function(node) {
+        if (node.id === "realm") {
+            return 'pficon pficon-users';
+        }
+        if (isLeaf(node)) {
+            return 'normal';
+        }
+        if (node.subGroups.length && node.collapsed) return 'collapsed';
+        if (node.subGroups.length && !node.collapsed) return 'expanded';
+        return 'collapsed';
+
+    };
+
+    $scope.getSelectedClass = function(node) {
+        if (node.selected) {
+            return 'selected';
+        } else if ($scope.cutNode && $scope.cutNode.id === node.id) {
+            return 'cut';
+        }
+        return undefined;
+    }
+});
+
+
 module.controller('ProviderConfigCtrl', function ($modal, $scope, $route, ComponentUtils, Client) {
     clientSelectControl($scope, $route.current.params.realm, Client);
     $scope.fileNames = {};
@@ -3077,6 +3202,24 @@ module.controller('ProviderConfigCtrl', function ($modal, $scope, $route, Compon
         $modal.open({
             templateUrl: resourceUrl + '/partials/modal/role-selector.html',
             controller: 'RoleSelectorModalCtrl',
+            resolve: {
+                realm: function () {
+                    return $scope.realm;
+                },
+                config: function () {
+                    return config;
+                },
+                configName: function () {
+                    return configName;
+                }
+            }
+        })
+    }
+
+    $scope.openGroupSelector = function (configName, config) {
+        $modal.open({
+            templateUrl: resourceUrl + '/partials/modal/group-selector.html',
+            controller: 'GroupSelectorModalCtrl',
             resolve: {
                 realm: function () {
                     return $scope.realm;

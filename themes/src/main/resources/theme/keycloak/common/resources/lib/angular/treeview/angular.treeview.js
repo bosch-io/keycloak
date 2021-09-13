@@ -45,7 +45,6 @@
 				var nodeChildren = attrs.nodeChildren || 'children';
 
 				//tree template
-
                 var template =
                     '<ul>' +
                     '<li data-ng-repeat="node in ' + treeModel + '">' +
@@ -54,6 +53,15 @@
                     '<div data-ng-hide="node.collapsed" data-tree-id="' + treeId + '" data-tree-model="node.' + nodeChildren + '" data-node-id=' + nodeId + ' data-node-label=' + nodeLabel + ' data-node-children=' + nodeChildren + '></div>' +
                     '</li>' +
                     '</ul>';
+
+				var groupMappingTemplate =
+					'<ul>' +
+					'<li data-ng-repeat="node in ' + treeModel + '">' +
+					'<i ng-class="getGroupClass(node)" data-ng-click="' + treeId + '.selectNodeHead(node)"></i>' +
+					'<span data-ng-class="getSelectedClass(node)" ng-dblclick="selectGroup(node)" data-ng-click="' + treeId + '.selectNodeLabel(node)">{{node.' + nodeLabel + '}}</span>' +
+					'<div data-ng-hide="node.collapsed" data-tree-id="' + treeId + '" data-tree-model="node.' + nodeChildren + '" data-node-id=' + nodeId + ' data-node-label=' + nodeLabel + ' data-node-children=' + nodeChildren + '></div>' +
+					'</li>' +
+					'</ul>';
 
 
                 //check tree id, tree model
@@ -89,7 +97,12 @@
 					}
 
 					//Rendering template.
-					element.html('').append( $compile( template )( scope ) );
+					if(treeId === 'groupMappingTree') {
+						element.html('').append( $compile( groupMappingTemplate )( scope ) );
+					}
+					else {
+						element.html('').append( $compile( template )( scope ) );
+					}
 				}
 			}
 		};
