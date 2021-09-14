@@ -3141,6 +3141,8 @@ module.controller('GroupSelectorModalCtrl', function($scope, $q, realm, config, 
         $modalInstance.close();
     }
 
+    $scope.edit = $scope.selectGroup;
+
     $scope.cancel = function() {
         $modalInstance.dismiss();
     }
