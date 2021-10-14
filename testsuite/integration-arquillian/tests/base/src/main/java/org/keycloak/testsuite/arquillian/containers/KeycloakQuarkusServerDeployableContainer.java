@@ -155,7 +155,7 @@ public class KeycloakQuarkusServerDeployableContainer implements DeployableConta
 
             try {
                 log.infof("Re-building the server with the new configuration");
-                reaugment.start().waitFor(10, TimeUnit.SECONDS);
+                reaugment.start().waitFor(20, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Timeout while waiting for re-augmentation", e);
             }
