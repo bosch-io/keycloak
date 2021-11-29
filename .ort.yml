@@ -307,3 +307,6 @@ resolutions:
   - id: "sonatype-2017-0348"
     reason: "INEFFECTIVE_VULNERABILITY"
     comment: "Baseline waiving. Takinng result from BCI scan"
+  - id: "sonatype-2016-0398"    
+    reason: "INEFFECTIVE_VULNERABILITY"
+    comment: "Baseline waiving. Takinng result from BCI scan"
