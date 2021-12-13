@@ -254,6 +254,24 @@ public class ConfigurationTest {
     }
 
     @Test
+    public void testDatabaseDriver() {
+        System.setProperty(CLI_ARGS, "--db=mssql" + ARG_SEPARATOR + "--db-url=jdbc:sqlserver://localhost/keycloak");
+        System.setProperty("kc.db-driver", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        assertTrue(System.getProperty(CLI_ARGS, "").contains("mssql"));
+        SmallRyeConfig config = createConfig();
+        assertEquals("jdbc:sqlserver://localhost/keycloak", config.getConfigValue("quarkus.datasource.jdbc.url").getValue());
+        assertEquals("mssql", config.getConfigValue("quarkus.datasource.db-kind").getValue());
+        /* 
+         * Fails with: 
+         *    org.junit.ComparisonFailure: 
+         *    Expected :com.microsoft.sqlserver.jdbc.SQLServerDriver
+         *    Actual   :org.h2.jdbcx.JdbcDataSource
+         */
+        assertEquals("com.microsoft.sqlserver.jdbc.SQLServerDriver", config.getConfigValue("quarkus.datasource.jdbc.driver").getValue());
+        
+    }
+    
+    @Test
     public void testDefaultDbPropertiesGetApplied() {
         System.setProperty(CLI_ARGS, "--db=postgres" + ARG_SEPARATOR + "--db-url-host=myhost" + ARG_SEPARATOR + "--db-url-database=kcdb" + ARG_SEPARATOR + "--db-url-properties=?foo=bar");
         SmallRyeConfig config = createConfig();
@@ -309,7 +327,7 @@ public class ConfigurationTest {
         config = createConfig();
         Assert.assertEquals("foo-val3", config.getConfigValue("quarkus.datasource.bar").getValue());
     }
-
+    
     @Test
     public void testClusterConfig() {
         // Cluster enabled by default, but disabled for the "dev" profile
