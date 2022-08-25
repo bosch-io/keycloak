@@ -18,6 +18,11 @@
 package org.keycloak.authentication.authenticators.resetcred;
 
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.credential.CredentialProvider;
+import org.keycloak.credential.PasswordCredentialProvider;
+import org.keycloak.credential.PasswordCredentialProviderFactory;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.credential.PasswordCredentialModel;
 
@@ -31,16 +36,18 @@ public class ResetPassword extends AbstractSetRequiredActionAuthenticator {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
-        if (context.getExecution().isRequired() ||
-                (context.getExecution().isConditional() &&
-                        configuredFor(context))) {
+        if (context.getExecution().isRequired()) {
             context.getAuthenticationSession().addRequiredAction(UserModel.RequiredAction.UPDATE_PASSWORD);
         }
         context.success();
     }
 
-    protected boolean configuredFor(AuthenticationFlowContext context) {
-        return context.getUser().credentialManager().isConfiguredFor(PasswordCredentialModel.TYPE);
+    @Override
+    public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
+        PasswordCredentialProvider passwordProvider = (PasswordCredentialProvider) session
+                .getProvider(CredentialProvider.class, PasswordCredentialProviderFactory.PROVIDER_ID);
+
+        return passwordProvider.isConfiguredFor(realm, user, PasswordCredentialModel.TYPE);
     }
 
     @Override
@@ -50,7 +57,7 @@ public class ResetPassword extends AbstractSetRequiredActionAuthenticator {
 
     @Override
     public String getHelpText() {
-        return "Sets the Update Password required action if execution is REQUIRED.  Will also set it if execution is OPTIONAL and the password is currently configured for it.";
+        return "Sets the Update Password required action.";
     }
 
     @Override
