@@ -26,6 +26,7 @@ import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
@@ -33,18 +34,6 @@ import java.util.Set;
 public abstract class AuthzEndpointRequestParser {
 
     private static final Logger logger = Logger.getLogger(AuthzEndpointRequestParser.class);
-
-    /**
-     * Max number of additional req params copied into client session note to prevent DoS attacks
-     *
-     */
-    public static final int ADDITIONAL_REQ_PARAMS_MAX_MUMBER = 5;
-
-    /**
-     * Max size of additional req param value copied into client session note to prevent DoS attacks - params with longer value are ignored
-     *
-     */
-    public static final int ADDITIONAL_REQ_PARAMS_MAX_SIZE = 2000;
 
     public static final String AUTHZ_REQUEST_OBJECT = "ParsedRequestObject";
     public static final String AUTHZ_REQUEST_OBJECT_ENCRYPTED = "EncryptedRequestObject";
@@ -73,6 +62,12 @@ public abstract class AuthzEndpointRequestParser {
         // https://tools.ietf.org/html/rfc7636#section-6.1
         KNOWN_REQ_PARAMS.add(OIDCLoginProtocol.CODE_CHALLENGE_PARAM);
         KNOWN_REQ_PARAMS.add(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM);
+    }
+
+    private final AuthzAdditionalRequestParamsExtractor requestParamsExtractor;
+
+    public AuthzEndpointRequestParser() {
+        requestParamsExtractor = new AuthzAdditionalRequestParamsExtractor(this::getParameter);
     }
 
     public void parseRequest(AuthorizationEndpointRequest request) {
@@ -120,24 +115,8 @@ public abstract class AuthzEndpointRequestParser {
     }
 
     protected void extractAdditionalReqParams(Map<String, String> additionalReqParams) {
-        for (String paramName : keySet()) {
-            if (!KNOWN_REQ_PARAMS.contains(paramName)) {
-                String value = getParameter(paramName);
-                if (value != null && value.trim().isEmpty()) {
-                    value = null;
-                }
-                if (value != null && value.length() <= ADDITIONAL_REQ_PARAMS_MAX_SIZE) {
-                    if (additionalReqParams.size() >= ADDITIONAL_REQ_PARAMS_MAX_MUMBER) {
-                        logger.debug("Maximal number of additional OIDC params (" + ADDITIONAL_REQ_PARAMS_MAX_MUMBER + ") exceeded, ignoring rest of them!");
-                        break;
-                    }
-                    additionalReqParams.put(paramName, value);
-                } else {
-                    logger.debug("OIDC Additional param " + paramName + " ignored because value is empty or longer than " + ADDITIONAL_REQ_PARAMS_MAX_SIZE);
-                }
-            }
-
-        }
+        Stream<String> paramNames = keySet().stream().filter(key -> !KNOWN_REQ_PARAMS.contains(key));
+        requestParamsExtractor.addAdditionalParams(paramNames, additionalReqParams);
     }
 
     protected <T> T replaceIfNotNull(T previousVal, T newVal) {
