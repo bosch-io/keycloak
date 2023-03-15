@@ -30,6 +30,8 @@ import org.keycloak.common.profile.PropertiesProfileConfigResolver;
 import org.keycloak.common.util.Time;
 import org.keycloak.component.ComponentFactoryProviderFactory;
 import org.keycloak.component.ComponentFactorySpi;
+import org.keycloak.device.DeviceRepresentationProviderFactoryImpl;
+import org.keycloak.device.DeviceRepresentationSpi;
 import org.keycloak.events.EventStoreSpi;
 import org.keycloak.executors.DefaultExecutorsProviderFactory;
 import org.keycloak.executors.ExecutorsSpi;
