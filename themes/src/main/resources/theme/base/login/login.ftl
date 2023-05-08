@@ -5,6 +5,11 @@
     <#elseif section = "form">
     <div id="kc-form">
       <div id="kc-form-wrapper">
+          <#if mfaResetRequested>
+              <div style="font-weight: bolder">
+                  ${msg("doLoginForMfa")}
+              </div>
+          </#if>
         <#if realm.password>
             <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
                 <#if !usernameHidden??>

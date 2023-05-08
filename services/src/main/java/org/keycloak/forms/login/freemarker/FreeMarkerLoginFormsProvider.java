@@ -37,12 +37,15 @@ import jakarta.ws.rs.core.UriInfo;
 import org.jboss.logging.Logger;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.authenticators.broker.util.PostBrokerLoginConstants;
+import org.keycloak.authentication.authenticators.broker.util.SerializedBrokeredIdentityContext;
 import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAuthenticator;
 import org.keycloak.authentication.authenticators.browser.OTPFormAuthenticator;
 import org.keycloak.authentication.requiredactions.util.UpdateProfileContext;
 import org.keycloak.authentication.requiredactions.util.UserUpdateProfileContext;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.common.util.ObjectUtil;
+import org.keycloak.constants.AdapterConstants;
 import org.keycloak.forms.login.LoginFormsPages;
 import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.forms.login.freemarker.model.AuthenticationContextBean;
@@ -75,6 +78,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
+import org.keycloak.protocol.oidc.OIDCLoginProtocolService;
 import org.keycloak.rar.AuthorizationDetails;
 import org.keycloak.services.Urls;
 import org.keycloak.services.messages.Messages;
@@ -91,6 +95,7 @@ import org.keycloak.theme.beans.MessagesPerFieldBean;
 import org.keycloak.theme.freemarker.FreeMarkerProvider;
 import org.keycloak.userprofile.UserProfileContext;
 import org.keycloak.userprofile.UserProfileProvider;
+import org.keycloak.utils.ClientRequestParamUtil;
 import org.keycloak.utils.MediaType;
 import org.keycloak.utils.StringUtil;
 
@@ -522,6 +527,80 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         if (authenticationSession != null && authenticationSession.getClientNote(Constants.KC_ACTION_EXECUTING) != null) {
             attributes.put("isAppInitiatedAction", true);
         }
+
+        if (authenticationSession != null && session != null) {
+            attributes.put("mfaResetRequested", Objects.equals("1",
+                    ClientRequestParamUtil.getClientRequestParam("mfa-reset", session, authenticationSession)));
+        }
+
+        if (authenticationSession != null && realm != null) {
+            attributes.put("mfaResetUrl", buildMfaResetUrl(baseUri));
+        }
+    }
+
+    private String buildMfaResetUrl(URI baseUri) {
+        UriBuilder uriBuilder = OIDCLoginProtocolService.authUrl(UriBuilder.fromUri(baseUri).replaceQuery(null));
+
+        String clientId = authenticationSession.getClient().getClientId();
+        uriBuilder.queryParam(OIDCLoginProtocol.CLIENT_ID_PARAM, clientId);
+
+        String scope = authenticationSession.getClientNote(OIDCLoginProtocol.SCOPE_PARAM);
+        if (scope != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.SCOPE_PARAM, scope);
+        }
+
+        String responseType = authenticationSession.getClientNote(OIDCLoginProtocol.RESPONSE_TYPE_PARAM);
+        if (responseType != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.RESPONSE_TYPE_PARAM, responseType);
+        }
+
+        String responseMode = authenticationSession.getClientNote(OIDCLoginProtocol.RESPONSE_MODE_PARAM);
+        if (responseMode != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.RESPONSE_MODE_PARAM, responseMode);
+        }
+
+        String redirectUri = authenticationSession.getClientNote(OIDCLoginProtocol.REDIRECT_URI_PARAM);
+        if (redirectUri != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.REDIRECT_URI_PARAM, redirectUri);
+        }
+
+        String codeChallenge = authenticationSession.getClientNote(OIDCLoginProtocol.CODE_CHALLENGE_PARAM);
+        if (codeChallenge != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.CODE_CHALLENGE_PARAM, codeChallenge);
+        }
+
+        String codeChallengeMethod = authenticationSession.getClientNote(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM);
+        if (codeChallengeMethod != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.CODE_CHALLENGE_METHOD_PARAM, codeChallengeMethod);
+        }
+
+        String nonce = authenticationSession.getClientNote(OIDCLoginProtocol.NONCE_PARAM);
+        if (nonce != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
+        }
+
+        String state = authenticationSession.getClientNote(OIDCLoginProtocol.STATE_PARAM);
+        if (state != null) {
+            uriBuilder.queryParam(OIDCLoginProtocol.STATE_PARAM, state);
+        }
+
+        String kcIdpHint = authenticationSession.getClientNote(AdapterConstants.KC_IDP_HINT);
+        if (kcIdpHint == null) {
+            // use the alias of the IDP which was used for authentication (if we are in post-login-flow)
+            String noteKey = PostBrokerLoginConstants.PBL_BROKERED_IDENTITY_CONTEXT;
+            SerializedBrokeredIdentityContext serializedCtx =
+                    SerializedBrokeredIdentityContext.readFromAuthenticationSession(authenticationSession, noteKey);
+            if (serializedCtx != null) {
+                kcIdpHint = serializedCtx.deserialize(session, authenticationSession).getIdpConfig().getAlias();
+            }
+        }
+        if (kcIdpHint != null) {
+            uriBuilder.queryParam(AdapterConstants.KC_IDP_HINT, kcIdpHint);
+        }
+
+        uriBuilder.queryParam("mfa-reset", "1");
+        
+        return uriBuilder.build(realm.getName()).toString();
     }
 
     /**

@@ -28,18 +28,22 @@
                     <label for="otp" class="${properties.kcLabelClass!}">${msg("loginOtpOneTime")}</label>
                 </div>
 
-            <div class="${properties.kcInputWrapperClass!}">
-                <input id="otp" name="otp" autocomplete="off" type="text" class="${properties.kcInputClass!}"
-                       autofocus aria-invalid="<#if messagesPerField.existsError('totp')>true</#if>"/>
+                <div class="${properties.kcInputWrapperClass!}">
+                    <input id="otp" name="otp" autocomplete="off" type="text" class="${properties.kcInputClass!}"
+                           autofocus aria-invalid="<#if messagesPerField.existsError('totp')>true</#if>"/>
 
-                <#if messagesPerField.existsError('totp')>
-                    <span id="input-error-otp-code" class="${properties.kcInputErrorMessageClass!}"
-                          aria-live="polite">
-                        ${kcSanitize(messagesPerField.get('totp'))?no_esc}
-                    </span>
-                </#if>
+                    <#if messagesPerField.existsError('totp')>
+                        <span id="input-error-otp-code" class="${properties.kcInputErrorMessageClass!}"
+                              aria-live="polite">
+                            ${kcSanitize(messagesPerField.get('totp'))?no_esc}
+                        </span>
+                    </#if>
+                </div>
+
+                <div class="${properties.kcLabelWrapperClass!}">
+                    <span><a href="${mfaResetUrl}">${msg("doResetMfa")}</a></span>
+                </div>
             </div>
-        </div>
 
             <div class="${properties.kcFormGroupClass!}">
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
