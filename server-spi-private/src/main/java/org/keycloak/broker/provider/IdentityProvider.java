@@ -74,6 +74,8 @@ public interface IdentityProvider<C extends IdentityProviderModel> extends Provi
         Response error(String message);
     }
 
+    C getConfig();
+
 
     void preprocessFederatedIdentity(KeycloakSession session, RealmModel realm, BrokeredIdentityContext context);
     void authenticationFinished(AuthenticationSessionModel authSession, BrokeredIdentityContext context);
@@ -131,5 +133,10 @@ public interface IdentityProvider<C extends IdentityProviderModel> extends Provi
      * @return
      */
     IdentityProviderDataMarshaller getMarshaller();
+
+    /**
+     * Checks whether a mapper is supported for this Identity Provider.
+     */
+    boolean isMapperSupported(IdentityProviderMapper mapper);
 
 }

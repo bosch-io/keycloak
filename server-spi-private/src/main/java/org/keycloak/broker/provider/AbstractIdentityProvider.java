@@ -33,7 +33,9 @@ import jakarta.ws.rs.core.UriInfo;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -165,5 +167,12 @@ public abstract class AbstractIdentityProvider<C extends IdentityProviderModel> 
     @Override
     public IdentityProviderDataMarshaller getMarshaller() {
         return new DefaultDataMarshaller();
+    }
+
+    @Override
+    public boolean isMapperSupported(IdentityProviderMapper mapper) {
+        List<String> compatibleIdps = Arrays.asList(mapper.getCompatibleProviders());
+        return compatibleIdps.contains(IdentityProviderMapper.ANY_PROVIDER)
+                || compatibleIdps.contains(getConfig().getProviderId());
     }
 }
