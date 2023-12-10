@@ -17,10 +17,13 @@
 
 package org.keycloak.models;
 
+import jakarta.ws.rs.core.Response;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.provider.InvalidationHandler.InvalidableObjectType;
 import org.keycloak.provider.Provider;
 import org.keycloak.services.clientpolicy.ClientPolicyManager;
+import org.keycloak.services.cors.Cors;
 import org.keycloak.sessions.AuthenticationSessionProvider;
 import org.keycloak.vault.VaultTranscriber;
 
@@ -242,5 +245,11 @@ public interface KeycloakSession extends AutoCloseable {
      * Client Policy Manager
      */
     ClientPolicyManager clientPolicy();
+
+    /**
+     * CORS
+     */
+    Cors cors(HttpRequest request);
+    Cors cors(HttpRequest request, Response.ResponseBuilder response);
 
 }

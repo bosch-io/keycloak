@@ -34,6 +34,7 @@
 
 org.keycloak.locale.LocaleSelectorSPI
 org.keycloak.locale.LocaleUpdaterSPI
+org.keycloak.services.cors.CorsSpi
 org.keycloak.theme.ThemeResourceSpi
 org.keycloak.theme.ThemeSelectorSpi
 org.keycloak.urls.HostnameSpi

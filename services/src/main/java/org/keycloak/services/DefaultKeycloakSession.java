@@ -16,10 +16,12 @@
  */
 package org.keycloak.services;
 
+import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.keycloak.common.util.StackUtil;
 import org.keycloak.component.ComponentFactory;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.jose.jws.DefaultTokenManager;
 import org.keycloak.keys.DefaultKeyManager;
 import org.keycloak.models.ClientProvider;
@@ -45,6 +47,8 @@ import org.keycloak.provider.ProviderFactory;
 import org.keycloak.provider.InvalidationHandler.InvalidableObjectType;
 import org.keycloak.provider.InvalidationHandler.ObjectType;
 import org.keycloak.services.clientpolicy.ClientPolicyManager;
+import org.keycloak.services.cors.Cors;
+import org.keycloak.services.cors.CorsProvider;
 import org.keycloak.sessions.AuthenticationSessionProvider;
 import org.keycloak.storage.DatastoreProvider;
 import org.keycloak.vault.DefaultVaultTranscriber;
@@ -425,4 +429,15 @@ public class DefaultKeycloakSession implements KeycloakSession {
     public boolean isClosed() {
         return closed;
     }
+
+    @Override
+    public Cors cors(HttpRequest request) {
+        return getProvider(CorsProvider.class).getCors(request);
+    }
+
+    @Override
+    public Cors cors(HttpRequest request, Response.ResponseBuilder response) {
+        return getProvider(CorsProvider.class).getCors(request, response);
+    }
+
 }

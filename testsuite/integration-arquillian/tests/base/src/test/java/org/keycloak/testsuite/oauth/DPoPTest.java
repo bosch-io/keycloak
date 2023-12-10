@@ -70,7 +70,7 @@ import org.keycloak.representations.dpop.DPoP;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.oidc.TokenMetadataRepresentation;
-import org.keycloak.services.resources.Cors;
+import org.keycloak.services.cors.Cors;
 import org.keycloak.testsuite.AbstractTestRealmKeycloakTest;
 import org.keycloak.testsuite.Assert;
 import org.keycloak.testsuite.AssertEvents;
