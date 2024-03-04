@@ -724,17 +724,17 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore {
     }
 
     @Override
-    public Stream<UserModel> searchForUserStream(RealmModel realm, String search, Integer firstResult, Integer maxResults) {
+    public Stream<UserModel> searchForUserStream(RealmModel realm, String search, Integer firstResult, Integer maxResults, String firstUsername) {
         Map<String, String> attributes = new HashMap<>(2);
         attributes.put(UserModel.SEARCH, search);
         attributes.put(UserModel.INCLUDE_SERVICE_ACCOUNT, Boolean.FALSE.toString());
 
-        return searchForUserStream(realm, attributes, firstResult, maxResults);
+        return searchForUserStream(realm, attributes, firstResult, maxResults, firstUsername);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> attributes, Integer firstResult, Integer maxResults) {
+    public Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> attributes, Integer firstResult, Integer maxResults, String firstUsername) {
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<UserEntity> queryBuilder = builder.createQuery(UserEntity.class);
         Root<UserEntity> root = queryBuilder.from(UserEntity.class);
@@ -749,7 +749,9 @@ public class JpaUserProvider implements UserProvider, UserCredentialStore {
         if (userGroups != null) {
             groupsWithPermissionsSubquery(queryBuilder, userGroups, root, predicates);
         }
-
+        if(firstUsername != null) {
+            predicates.add(builder.greaterThanOrEqualTo(root.get(UserModel.USERNAME), firstUsername));
+        }
         queryBuilder.where(predicates.toArray(Predicate[]::new)).orderBy(builder.asc(root.get(UserModel.USERNAME)));
 
         TypedQuery<UserEntity> query = em.createQuery(queryBuilder);

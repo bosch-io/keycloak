@@ -132,7 +132,7 @@ public abstract class MultipleStepsExportProvider<T extends MultipleStepsExportP
                     protected void runExportImportTask(KeycloakSession session) throws IOException {
                         RealmModel realm = session.realms().getRealmByName(realmName);
                         usersHolder.users = session.users()
-                                .searchForUserStream(realm, Collections.emptyMap(), usersHolder.currentPageStart, usersHolder.currentPageEnd - usersHolder.currentPageStart)
+                                .searchForUserStream(realm, Collections.emptyMap(), usersHolder.currentPageStart, usersHolder.currentPageEnd - usersHolder.currentPageStart, null)
                                 .collect(Collectors.toList());
 
                         writeUsers(realmName + "-users-" + (usersHolder.currentPageStart / countPerPage) + ".json", session, realm, usersHolder.users);

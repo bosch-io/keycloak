@@ -52,7 +52,7 @@ public interface UserQueryMethodsProvider {
      */
     @Deprecated
     default Stream<UserModel> searchForUserStream(RealmModel realm, String search) {
-        return searchForUserStream(realm, Map.of(UserModel.SEARCH, search), null, null);
+        return searchForUserStream(realm, Map.of(UserModel.SEARCH, search), null, null, null);
     }
 
     /**
@@ -67,11 +67,11 @@ public interface UserQueryMethodsProvider {
      * @param firstResult first result to return. Ignored if negative, zero, or {@code null}.
      * @param maxResults  maximum number of results to return. Ignored if negative or {@code null}.
      * @return a non-null {@link Stream} of users that match the search criteria.
-     * @deprecated Use {@link #searchForUserStream(RealmModel, Map, Integer, Integer)} with an {@code params} map containing {@link UserModel#SEARCH} instead.
+     * @deprecated Use {@link #searchForUserStream(RealmModel, Map, Integer, Integer, String)} with an {@code params} map containing {@link UserModel#SEARCH} instead.
      */
     @Deprecated
-    default Stream<UserModel> searchForUserStream(RealmModel realm, String search, Integer firstResult, Integer maxResults) {
-        return searchForUserStream(realm, Map.of(UserModel.SEARCH, search), firstResult, maxResults);
+    default Stream<UserModel> searchForUserStream(RealmModel realm, String search, Integer firstResult, Integer maxResults, String firstUsername) {
+        return searchForUserStream(realm, Map.of(UserModel.SEARCH, search), firstResult, maxResults, firstUsername);
     }
 
     /**
@@ -103,7 +103,7 @@ public interface UserQueryMethodsProvider {
      * @return a non-null {@link Stream} of users that match the search parameters.
      */
     default Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params) {
-        return searchForUserStream(realm, params, null, null);
+        return searchForUserStream(realm, params, null, null, null);
     }
 
     /**
@@ -136,7 +136,7 @@ public interface UserQueryMethodsProvider {
      * @param maxResults  maximum number of results to return. Ignored if negative or {@code null}.
      * @return a non-null {@link Stream} of users that match the search criteria.
      */
-    Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult, Integer maxResults);
+    Stream<UserModel> searchForUserStream(RealmModel realm, Map<String, String> params, Integer firstResult, Integer maxResults, String firstUsername);
 
     /**
      * Obtains users that belong to a specific group.

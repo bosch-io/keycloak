@@ -386,7 +386,7 @@ public class InfinispanUserSessionProvider implements UserSessionProvider {
                 attributes.put(UserModel.IDP_USER_ID, idpAliasSessionId[1]);
 
                 UserProvider userProvider = session.getProvider(UserProvider.class);
-                UserModel userModel = userProvider.searchForUserStream(realm, attributes, 0, null).findFirst().orElse(null);
+                UserModel userModel = userProvider.searchForUserStream(realm, attributes, 0, null, null).findFirst().orElse(null);
                 return userModel != null ?
                         persister.loadUserSessionsStream(realm, userModel, true, 0, null) :
                         Stream.empty();

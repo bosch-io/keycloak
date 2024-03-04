@@ -14,6 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.logging.Logger;
 import org.keycloak.admin.ui.rest.model.BruteUser;
@@ -72,7 +73,9 @@ public class BruteForceUsersResource {
             @QueryParam("enabled") Boolean enabled,
             @QueryParam("briefRepresentation") Boolean briefRepresentation,
             @QueryParam("exact") Boolean exact,
-            @QueryParam("q") String searchQuery) {
+            @QueryParam("q") String searchQuery,
+            @QueryParam("firstUsername") String firstUsername)
+    {
         final UserPermissionEvaluator userPermissionEvaluator = auth.users();
         userPermissionEvaluator.requireQuery();
 
@@ -95,7 +98,7 @@ public class BruteForceUsersResource {
                     attributes.put(UserModel.ENABLED, enabled.toString());
                 }
                 return searchForUser(attributes, realm, userPermissionEvaluator, briefRepresentation, firstResult,
-                        maxResults, false);
+                        maxResults, false, firstUsername);
             }
         } else if (last != null || first != null || email != null || username != null || emailVerified != null
                 || idpAlias != null || idpUserId != null || enabled != null || exact != null || !searchAttributes.isEmpty()) {
@@ -131,17 +134,17 @@ public class BruteForceUsersResource {
             attributes.putAll(searchAttributes);
 
             return searchForUser(attributes, realm, userPermissionEvaluator, briefRepresentation, firstResult,
-                    maxResults, true);
+                    maxResults, true, firstUsername);
         } else {
             return searchForUser(new HashMap<>(), realm, userPermissionEvaluator, briefRepresentation,
-                    firstResult, maxResults, false);
+                    firstResult, maxResults, false, firstUsername);
         }
 
         return toRepresentation(realm, userPermissionEvaluator, briefRepresentation, userModels);
 
     }
 
-    private Stream<BruteUser> searchForUser(Map<String, String> attributes, RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult, Integer maxResults, Boolean includeServiceAccounts) {
+    private Stream<BruteUser> searchForUser(Map<String, String> attributes, RealmModel realm, UserPermissionEvaluator usersEvaluator, Boolean briefRepresentation, Integer firstResult, Integer maxResults, Boolean includeServiceAccounts, String firstUsername) {
         attributes.put(UserModel.INCLUDE_SERVICE_ACCOUNT, includeServiceAccounts.toString());
 
         if (!auth.users().canView()) {
@@ -152,7 +155,7 @@ public class BruteForceUsersResource {
             }
         }
 
-        Stream<UserModel> userModels = session.users().searchForUserStream(realm, attributes, firstResult, maxResults);
+        Stream<UserModel> userModels = session.users().searchForUserStream(realm, attributes, firstResult, maxResults, firstUsername);
         return toRepresentation(realm, usersEvaluator, briefRepresentation, userModels);
     }
 
